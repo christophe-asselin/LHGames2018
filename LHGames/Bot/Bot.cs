@@ -85,6 +85,7 @@ namespace LHGames.Bot
         /// <param name="map">The gamemap.</param>
         /// <param name="visiblePlayers">Players that are visible to your bot.</param>
         /// <returns>The action you wish to execute.</returns>
+        List<PathNoeud> finalPath = new List<PathNoeud>();
         internal string ExecuteTurn(Map map, IEnumerable<IPlayer> visiblePlayers)
         {
             //portion pathfinding pour les Mines debut
@@ -92,13 +93,20 @@ namespace LHGames.Bot
             List<PathNoeud> minePosition = new List<PathNoeud>();
             List<ResourceTile> minePosition_ = new List<ResourceTile>();
             minePosition_ = GetVisibleResourceTiles(map);
+            foreach(ResourceTile rt in minePosition_)
+            {
+                minePosition.Add(new PathNoeud(rt.Position.X, rt.Position.Y, 0, 0, null));
+            }
             List<PathNoeud> paths = new List<PathNoeud>();
-            Stack<PathNoeud> finalPath = new Stack<PathNoeud>();
-            if (finalPath == null) {
+            //List<PathNoeud> finalPath = new List<PathNoeud>();
+            if (finalPath.Count() == 0) {
                 foreach (PathNoeud n in minePosition)
                 {
                     PathNoeud path = trouverPathMine(playerPosition, n, map);
-                    paths.Add(path);
+                    if (path != null)
+                    {
+                        paths.Add(path);
+                    }
                 }
                 PathNoeud currentPath = paths[0];
                 foreach (PathNoeud n in paths)
@@ -109,10 +117,10 @@ namespace LHGames.Bot
                     }
                 }
                 //fin portion pathfinding
-                finalPath = new Stack<PathNoeud>();
+                finalPath = new List<PathNoeud>();
                 while (currentPath != null)
                 {
-                    finalPath.Push(currentPath);
+                    finalPath.Add(currentPath);
                     currentPath = currentPath.getParent();
                 }
             }
@@ -120,21 +128,17 @@ namespace LHGames.Bot
 
             if(finalPath.Count > 0)
             {
-                PathNoeud prochainMove = finalPath.Pop();
-                return AIHelper.CreateMoveAction(new Point(prochainMove.getX(), prochainMove.getY()));
+                PathNoeud prochainMove = finalPath[finalPath.Count - 1];
+                finalPath.Remove(prochainMove);
+                return AIHelper.CreateMoveAction(new Point(prochainMove.getX()-PlayerInfo.Position.X, prochainMove.getY()-PlayerInfo.Position.Y));
             }
 
-            // TODO: Implement your AI here.
-            /*
-            if (map.GetTileAt(PlayerInfo.Position.X + _currentDirection, PlayerInfo.Position.Y) == TileContent.Wall)
-            {
-                _currentDirection *= -1;
-            }
+          
             
             var data = StorageHelper.Read<TestClass>("Test");
             Console.WriteLine(data?.Test);
             return AIHelper.CreateMoveAction(new Point(_currentDirection, 0));
-            */
+            
             return null;
         }
 
@@ -162,6 +166,8 @@ namespace LHGames.Bot
                         next = n;
                     }
                 }
+                openSet.Remove(next);
+                closedSet.Add(next);
 
                 if (verifierNoeudPareil(next, end))
                 {
@@ -187,11 +193,10 @@ namespace LHGames.Bot
                         }
                     }
                     bool isWalkable = true;
-                    if (TileContent.Wall == map.GetTileAt(n.getX(), n.getY()) || TileContent.Empty == map.GetTileAt(n.getX(), n.getY()) || TileContent.Lava == map.GetTileAt(n.getX(), n.getY()) || TileContent.Resource == map.GetTileAt(n.getX(), n.getY()))
+                    if (TileContent.Wall == map.GetTileAt(n.getX(), n.getY()) || TileContent.Lava == map.GetTileAt(n.getX(), n.getY()))
                     {
                         isWalkable = false;
                     }
-
 
                     if (!contienDeja && isWalkable)
                     {

@@ -48,7 +48,7 @@ namespace LHGames.Helper
         /// <returns>The content of the tile.</returns>
         internal TileContent GetTileAt(int x, int y)
         {
-            if (x < XMin || x > XMax || y < YMin || y > YMax)
+            if (x < XMin || x >= XMax || y < YMin || y >= YMax)
             {
                 return TileContent.Empty;
             }
