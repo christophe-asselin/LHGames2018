@@ -182,12 +182,15 @@ namespace LHGames.Bot
             if (finalPath.Count > 0)
             {
                 PathNoeud prochainMove = finalPath[finalPath.Count - 1];
-                finalPath.Remove(prochainMove);
                 if (map.GetTileAt(prochainMove.getX(), prochainMove.getY()) == TileContent.Wall)
                 {
                     return AIHelper.CreateMeleeAttackAction(new Point(prochainMove.getX() - PlayerInfo.Position.X, prochainMove.getY() - PlayerInfo.Position.Y));
                 }
-                return AIHelper.CreateMoveAction(new Point(prochainMove.getX()-PlayerInfo.Position.X, prochainMove.getY()-PlayerInfo.Position.Y));
+                else
+                {
+                    finalPath.Remove(prochainMove);
+                    return AIHelper.CreateMoveAction(new Point(prochainMove.getX() - PlayerInfo.Position.X, prochainMove.getY() - PlayerInfo.Position.Y));
+                }
             }
             
 
