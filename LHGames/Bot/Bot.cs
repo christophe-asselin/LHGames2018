@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using LHGames.Helper;
 
@@ -26,6 +27,11 @@ namespace LHGames.Bot
         void setFCost()
         {
             fCost = hCost + gCost;
+        }
+
+        public PathNoeud getParent()
+        {
+            return parent;
         }
 
         public int getFCost()
@@ -87,30 +93,49 @@ namespace LHGames.Bot
             List<ResourceTile> minePosition_ = new List<ResourceTile>();
             minePosition_ = GetVisibleResourceTiles(map);
             List<PathNoeud> paths = new List<PathNoeud>();
-            foreach (PathNoeud n in minePosition)
-            {
-                PathNoeud path = trouverPathMine(playerPosition, n, map);
-                paths.Add(path);
-            }
-            PathNoeud currentPath = paths[0];
-            foreach(PathNoeud n in paths)
-            {
-                if (currentPath.getGCost() > n.getGCost())
+            Stack<PathNoeud> finalPath = new Stack<PathNoeud>();
+            if (finalPath == null) {
+                foreach (PathNoeud n in minePosition)
                 {
-                    currentPath = n;
+                    PathNoeud path = trouverPathMine(playerPosition, n, map);
+                    paths.Add(path);
+                }
+                PathNoeud currentPath = paths[0];
+                foreach (PathNoeud n in paths)
+                {
+                    if (currentPath.getGCost() > n.getGCost())
+                    {
+                        currentPath = n;
+                    }
+                }
+                //fin portion pathfinding
+                finalPath = new Stack<PathNoeud>();
+                while (currentPath != null)
+                {
+                    finalPath.Push(currentPath);
+                    currentPath = currentPath.getParent();
                 }
             }
-            //fin portion pathfinding
+
+
+            if(finalPath.Count > 0)
+            {
+                PathNoeud prochainMove = finalPath.Pop();
+                return AIHelper.CreateMoveAction(new Point(prochainMove.getX(), prochainMove.getY()));
+            }
 
             // TODO: Implement your AI here.
+            /*
             if (map.GetTileAt(PlayerInfo.Position.X + _currentDirection, PlayerInfo.Position.Y) == TileContent.Wall)
             {
                 _currentDirection *= -1;
             }
-
+            
             var data = StorageHelper.Read<TestClass>("Test");
             Console.WriteLine(data?.Test);
             return AIHelper.CreateMoveAction(new Point(_currentDirection, 0));
+            */
+            return null;
         }
 
         /// <summary>
