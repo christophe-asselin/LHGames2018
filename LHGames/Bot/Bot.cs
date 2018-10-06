@@ -246,6 +246,7 @@ namespace LHGames.Bot
             List<PathNoeud> openSet = new List<PathNoeud>();
             List<PathNoeud> closedSet = new List<PathNoeud>();
             List<PathNoeud> path = new List<PathNoeud>();
+            PathNoeud moinsPire = start;
             openSet.Add(start);
             while (openSet.Count > 0)
             {
@@ -256,6 +257,10 @@ namespace LHGames.Bot
                     if (next.getFCost() > n.getFCost() || (next.getFCost() == n.getFCost() && next.getHCost() < n.getHCost()))
                     {
                         next = n;
+                    }
+                    if (next.getHCost() < n.getHCost())
+                    {
+                        moinsPire = n;
                     }
                 }
                 openSet.Remove(next);
@@ -332,7 +337,7 @@ namespace LHGames.Bot
                     }
                 }
             }
-            return null;
+            return moinsPire;
         }
 
         static List<PathNoeud> getNeighbours(PathNoeud n, PathNoeud end, Map map, IPlayer playerInfo)
