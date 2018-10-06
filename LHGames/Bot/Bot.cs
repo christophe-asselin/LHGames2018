@@ -85,12 +85,8 @@ namespace LHGames.Bot
         internal bool MustBuyPotions()
         {
             bool mustBuy = false;
-            int nPotions = 0;
-            foreach(PurchasableItem item in PlayerInfo.CarriedItems)
-            {
-                if (item == PurchasableItem.HealthPotion)
-                    nPotions++;
-            }
+            int nPotions = GetNPotions(PlayerInfo);
+
             if ((nPotions * 5) < (PlayerInfo.MaxHealth - PlayerInfo.Health))
                 mustBuy = true;
 
@@ -105,6 +101,28 @@ namespace LHGames.Bot
                 mustReturn = true;
 
             return mustReturn;
+        }
+
+        internal IPlayer AttackNearby(IEnumerable<IPlayer> visiblePlayers)
+        {
+            foreach(IPlayer player in visiblePlayers)
+            {
+                if ((PlayerInfo.Health + PlayerInfo.Defence + (5 * GetNPotions(PlayerInfo)) - PlayerInfo.AttackPower) > (player.Health + player.Defence + (5 * GetNPotions(player)) - player.AttackPower))
+                    return player;
+            }
+
+            return null;
+        }
+
+        internal int GetNPotions(IPlayer player)
+        {
+            int nPotions = 0;
+            foreach (PurchasableItem item in player.CarriedItems)
+            {
+                if (item == PurchasableItem.HealthPotion)
+                    nPotions++;
+            }
+            return nPotions;
         }
     }
 }
