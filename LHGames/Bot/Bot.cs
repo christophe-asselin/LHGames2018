@@ -9,11 +9,6 @@ namespace LHGames.Bot
         internal IPlayer PlayerInfo { get; set; }
         private int _currentDirection = 1;
 
-        // CarryingCapacity, 
-        //AttackPower,
-        //Defence,
-        //MaximumHealth,
-        //CollectingSpeed
         private int _numAmelioration = 0;
         List<string> Amelioration = new List<string> {
             "1S", "1C", "2S", "2C",
@@ -87,6 +82,12 @@ namespace LHGames.Bot
         /// <returns>The action you wish to execute.</returns>
         internal string ExecuteTurn(Map map, IEnumerable<IPlayer> visiblePlayers)
         {
+            
+            if(PlayerInfo.Position.X == PlayerInfo.HouseLocation.X)
+                if(PlayerInfo.Position.Y == PlayerInfo.HouseLocation.Y)
+                    if(CanBuy_Amelioration(PlayerInfo))
+                        return WhatToBuy_Amelioration(PlayerInfo);
+
             // TODO: Implement your AI here.
             if (map.GetTileAt(PlayerInfo.Position.X + _currentDirection, PlayerInfo.Position.Y) == TileContent.Wall)
             {
