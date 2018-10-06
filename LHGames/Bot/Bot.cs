@@ -36,6 +36,8 @@ namespace LHGames.Bot
                 _currentDirection *= -1;
             }
 
+            List<Tile> visibleHouseTiles = new List<Tile>();
+            visibleHouseTiles = GetVisibleHouses(map);
 
             var data = StorageHelper.Read<TestClass>("Test");
             Console.WriteLine(data?.Test);
@@ -71,10 +73,29 @@ namespace LHGames.Bot
             foreach (Tile t in visibleTiles)
             {
                 if (t.TileType == TileContent.House && t.Position != PlayerInfo.HouseLocation)
+                {
                     visibleHouseTiles.Add(t);
+                    Console.WriteLine(t.Position.X + ", " + t.Position.Y);
+                }
             }
 
             return visibleHouseTiles;
+        }
+
+        internal bool mustBuyPotions()
+        {
+            bool mustBuy = false;
+            int nPotions = 0;
+            foreach(PurchasableItem item in PlayerInfo.CarriedItems)
+            {
+                if (item == PurchasableItem.HealthPotion)
+                    nPotions++;
+            }
+            if ((nPotions * 5) < (PlayerInfo.MaxHealth - PlayerInfo.Health))
+                mustBuy = true;
+
+            return mustBuy;
+
         }
     }
 }
