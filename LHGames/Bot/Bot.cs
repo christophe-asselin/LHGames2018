@@ -82,16 +82,10 @@ namespace LHGames.Bot
             return visibleHouseTiles;
         }
 
-        internal bool MustBuyPotions()
+        internal int BuyNPotions()
         {
-            bool mustBuy = false;
             int nPotions = GetNPotions(PlayerInfo);
-
-            if ((nPotions * 5) < (PlayerInfo.MaxHealth - PlayerInfo.Health))
-                mustBuy = true;
-
-            return mustBuy;
-
+            return (10 - nPotions);
         }
 
         internal bool MustReturnToHouse()
@@ -107,7 +101,7 @@ namespace LHGames.Bot
         {
             foreach(IPlayer player in visiblePlayers)
             {
-                if ((PlayerInfo.Health + PlayerInfo.Defence + (5 * GetNPotions(PlayerInfo)) - PlayerInfo.AttackPower) > (player.Health + player.Defence + (5 * GetNPotions(player)) - player.AttackPower))
+                if (PlayerInfo.AttackPower > player.Defence && (PlayerInfo.Health + PlayerInfo.Defence + (5 * GetNPotions(PlayerInfo)) - player.AttackPower) > (player.Health + player.Defence + (5 * GetNPotions(player)) - PlayerInfo.AttackPower))
                     return player;
             }
 
