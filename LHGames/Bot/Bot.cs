@@ -82,7 +82,7 @@ namespace LHGames.Bot
             return visibleHouseTiles;
         }
 
-        internal bool mustBuyPotions()
+        internal bool MustBuyPotions()
         {
             bool mustBuy = false;
             int nPotions = 0;
@@ -96,6 +96,15 @@ namespace LHGames.Bot
 
             return mustBuy;
 
+        }
+
+        internal bool MustReturnToHouse()
+        {
+            bool mustReturn = false;
+            if (PlayerInfo.CarriedResources + 500 >= PlayerInfo.CarryingCapacity)
+                mustReturn = true;
+
+            return mustReturn;
         }
     }
 }
