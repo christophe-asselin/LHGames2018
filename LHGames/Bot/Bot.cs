@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using LHGames.Helper;
+using System.Linq;
 
 namespace LHGames.Bot
 {
@@ -33,6 +34,8 @@ namespace LHGames.Bot
             {
                 _currentDirection *= -1;
             }
+            
+
 
             var data = StorageHelper.Read<TestClass>("Test");
             Console.WriteLine(data?.Test);
@@ -44,6 +47,19 @@ namespace LHGames.Bot
         /// </summary>
         internal void AfterTurn()
         {
+        }
+
+        internal List<ResourceTile> GetVisibleResourceTiles(Map map)
+        {
+            List<Tile> visibleTiles = map.GetVisibleTiles().ToList<Tile>();
+            List<ResourceTile> visibleResourceTiles = new List<ResourceTile>();
+
+            foreach (ResourceTile t in visibleTiles.OfType<ResourceTile>())
+            {
+                visibleResourceTiles.Add(t);
+            }
+
+            return visibleResourceTiles;
         }
     }
 }
