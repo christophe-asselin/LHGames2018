@@ -183,6 +183,10 @@ namespace LHGames.Bot
             {
                 PathNoeud prochainMove = finalPath[finalPath.Count - 1];
                 finalPath.Remove(prochainMove);
+                if (map.GetTileAt(prochainMove.getX(), prochainMove.getY()) == TileContent.Wall)
+                {
+                    return AIHelper.CreateMeleeAttackAction(new Point(prochainMove.getX() - PlayerInfo.Position.X, prochainMove.getY() - PlayerInfo.Position.Y));
+                }
                 return AIHelper.CreateMoveAction(new Point(prochainMove.getX()-PlayerInfo.Position.X, prochainMove.getY()-PlayerInfo.Position.Y));
             }
             
