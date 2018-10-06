@@ -89,7 +89,7 @@ namespace LHGames.Bot
             List<PathNoeud> paths = new List<PathNoeud>();
             foreach (PathNoeud n in minePosition)
             {
-                PathNoeud path = trouverPathMine(playerPosition, n);
+                PathNoeud path = trouverPathMine(playerPosition, n, map);
                 paths.Add(path);
             }
             PathNoeud currentPath = paths[0];
@@ -120,7 +120,7 @@ namespace LHGames.Bot
         {
         }
 
-        static PathNoeud trouverPathMine(PathNoeud start, PathNoeud end)
+        static PathNoeud trouverPathMine(PathNoeud start, PathNoeud end, Map map)
         {
             List<PathNoeud> openSet = new List<PathNoeud>();
             List<PathNoeud> closedSet = new List<PathNoeud>();
@@ -161,7 +161,14 @@ namespace LHGames.Bot
                             contienDeja = true;
                         }
                     }
-                    if (!contienDeja)
+                    bool isWalkable = true;
+                    if (TileContent.Wall == map.GetTileAt(n.getX(), n.getY()) || TileContent.Empty == map.GetTileAt(n.getX(), n.getY()) || TileContent.Lava == map.GetTileAt(n.getX(), n.getY()) || TileContent.Resource == map.GetTileAt(n.getX(), n.getY()))
+                    {
+                        isWalkable = false;
+                    }
+
+
+                    if (!contienDeja && isWalkable)
                     {
                         openSet.Add(n);
                     }
