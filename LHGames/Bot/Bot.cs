@@ -19,6 +19,7 @@ namespace LHGames.Bot
         internal void BeforeTurn(IPlayer playerInfo)
         {
             PlayerInfo = playerInfo;
+           
         }
 
         /// <summary>
@@ -34,7 +35,6 @@ namespace LHGames.Bot
             {
                 _currentDirection *= -1;
             }
-            
 
 
             var data = StorageHelper.Read<TestClass>("Test");
@@ -57,9 +57,24 @@ namespace LHGames.Bot
             foreach (ResourceTile t in visibleTiles.OfType<ResourceTile>())
             {
                 visibleResourceTiles.Add(t);
+                Console.WriteLine(t.Position.X + ", " + t.Position.Y);
             }
 
             return visibleResourceTiles;
+        }
+
+        internal List<Tile> GetVisibleHouses(Map map)
+        {
+            List<Tile> visibleTiles = map.GetVisibleTiles().ToList<Tile>();
+            List<Tile> visibleHouseTiles = new List<Tile>();
+
+            foreach (Tile t in visibleTiles)
+            {
+                if (t.TileType == TileContent.House && t.Position != PlayerInfo.HouseLocation)
+                    visibleHouseTiles.Add(t);
+            }
+
+            return visibleHouseTiles;
         }
     }
 }
