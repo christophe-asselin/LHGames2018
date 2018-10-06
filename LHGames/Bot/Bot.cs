@@ -24,6 +24,12 @@ namespace LHGames.Bot
             setFCost();
         }
 
+        public void setGCost(int x)
+        {
+            gCost += x;
+            setFCost();
+        }
+
         void setFCost()
         {
             fCost = hCost + gCost;
@@ -99,6 +105,14 @@ namespace LHGames.Bot
             }
             List<PathNoeud> paths = new List<PathNoeud>();
             //List<PathNoeud> finalPath = new List<PathNoeud>();
+
+            if (PlayerInfo.Position.X == PlayerInfo.HouseLocation.X)
+                if (PlayerInfo.Position.Y == PlayerInfo.HouseLocation.Y)
+                    if (CanBuy_Amelioration(PlayerInfo))
+                        return WhatToBuy_Amelioration(PlayerInfo);
+
+
+
             if (finalPath.Count() == 0) {
                 if (MustReturnToHouse())
                 {
@@ -119,20 +133,23 @@ namespace LHGames.Bot
                         }
                     }
                 }
-                PathNoeud currentPath = paths[0];
-                foreach (PathNoeud n in paths)
+                if (paths.Count > 0)
                 {
-                    if (currentPath.getGCost() > n.getGCost())
+                    PathNoeud currentPath = paths[0];
+                    foreach (PathNoeud n in paths)
                     {
-                        currentPath = n;
+                        if (currentPath.getGCost() > n.getGCost())
+                        {
+                            currentPath = n;
+                        }
                     }
-                }
-                //fin portion pathfinding
-                finalPath = new List<PathNoeud>();
-                while (currentPath != null)
-                {
-                    finalPath.Add(currentPath);
-                    currentPath = currentPath.getParent();
+                    //fin portion pathfinding
+                    finalPath = new List<PathNoeud>();
+                    while (currentPath != null)
+                    {
+                        finalPath.Add(currentPath);
+                        currentPath = currentPath.getParent();
+                    }
                 }
             }
 
@@ -147,6 +164,7 @@ namespace LHGames.Bot
                     {
                         x = PlayerInfo.Position.X + i;
                         y = PlayerInfo.Position.Y;
+                        return AIHelper.CreateCollectAction(new Point(x - PlayerInfo.Position.X, y - PlayerInfo.Position.Y));
                     }
                 }
                 for (int i = -1; i <= 1; i += 2)
@@ -155,9 +173,9 @@ namespace LHGames.Bot
                     {
                         x = PlayerInfo.Position.X;
                         y = PlayerInfo.Position.Y + i;
+                        return AIHelper.CreateCollectAction(new Point(x - PlayerInfo.Position.X, y - PlayerInfo.Position.Y));
                     }
                 }
-                return AIHelper.CreateCollectAction(new Point(x - PlayerInfo.Position.X, y - PlayerInfo.Position.Y));
             }
 
             // se deplacer
@@ -260,11 +278,47 @@ namespace LHGames.Bot
                         }
                     }
                     bool isWalkable = true;
-                    if (TileContent.Wall == map.GetTileAt(n.getX(), n.getY()) || TileContent.Lava == map.GetTileAt(n.getX(), n.getY()))
+                    if (TileContent.Lava == map.GetTileAt(n.getX(), n.getY()))
                     {
                         isWalkable = false;
                     }
-
+                    if (TileContent.Resource == map.GetTileAt(n.getX(), n.getY()))
+                    {
+                        if (verifierNoeudPareil(n, end))
+                        {
+                            return n;
+                        }
+                        else
+                        {
+                            isWalkable = false;
+                        }
+                    }
+                    
+                    if (TileContent.Wall == map.GetTileAt(n.getX(), n.getY()))
+                    {
+                        if (map.WallsAreBreakable)
+                        {
+                            int coup;
+                            if (playerInfo.AttackPower >= 5)
+                            {
+                                coup = 1;
+                            }
+                            else if (5 % playerInfo.AttackPower == 0)
+                            {
+                                coup = 5 / playerInfo.AttackPower;
+                            }
+                            else
+                            {
+                                coup = 5 / playerInfo.AttackPower + 1;
+                            }
+                            n.setGCost(coup);
+                        }
+                        else
+                        {
+                            isWalkable = false;
+                        }
+                    }
+                    
                     if (!contienDeja && isWalkable)
                     {
                         openSet.Add(n);
@@ -301,6 +355,63 @@ namespace LHGames.Bot
             return neighbours;
         }
 
+        private int _numAmelioration = 0;
+        List<string> Amelioration = new List<string> {
+            "1S", "1C", "2S", "2C",
+            "1D", "1H", "3S", "2D", "3C",
+            "2H", "4C", "3D", "4S", "3H",
+            "4D", "4H", "1A", "2A", "3A", "5C",
+            "5S", "5D", "5H", "4A", "5A"
+        };
+
+        List<int> Cout_Amelioration = new List<int> {
+            10000, 15000, 25000, 50000, 100000
+        };
+
+        internal bool CanBuy_Amelioration(IPlayer playerInfo)
+        {
+            string AmeliorationEnCours = Amelioration[_numAmelioration];
+            if (playerInfo.TotalResources >= Cout_Amelioration[(int)Char.GetNumericValue((AmeliorationEnCours[0]))-1])
+            {
+                return true;
+            }
+            return false;
+        }
+
+        // Doit d'abord vérifier si peut acheter
+        internal string WhatToBuy_Amelioration(IPlayer playerInfo)
+        {
+
+            string AmeliorationEnCours = Amelioration[_numAmelioration];
+
+            if (AmeliorationEnCours[1] == 'C')
+            {
+                _numAmelioration++;
+                return AIHelper.CreateUpgradeAction(UpgradeType.CarryingCapacity);
+            }
+            if (AmeliorationEnCours[1] == 'S')
+            {
+                _numAmelioration++;
+                return AIHelper.CreateUpgradeAction(UpgradeType.CollectingSpeed);
+            }
+            if (AmeliorationEnCours[1] == 'D')
+            {
+                _numAmelioration++;
+                return AIHelper.CreateUpgradeAction(UpgradeType.Defence);
+            }
+            if (AmeliorationEnCours[1] == 'A')
+            {
+                _numAmelioration++;
+                return AIHelper.CreateUpgradeAction(UpgradeType.AttackPower);
+            }
+            if (AmeliorationEnCours[1] == 'H')
+            {
+                _numAmelioration++;
+                return AIHelper.CreateUpgradeAction(UpgradeType.MaximumHealth);
+            }
+            return "";
+        }
+
         static int calculerHCost(PathNoeud n, PathNoeud end)
         {
             int x = Math.Abs(n.getX() - end.getX());
@@ -315,7 +426,8 @@ namespace LHGames.Bot
 
             foreach (ResourceTile t in visibleTiles.OfType<ResourceTile>())
             {
-                visibleResourceTiles.Add(t);
+                if (t.Position.X >= 0 && t.Position.Y >= 0)
+                    visibleResourceTiles.Add(t);
             }
 
             return visibleResourceTiles;
