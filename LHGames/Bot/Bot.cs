@@ -100,12 +100,23 @@ namespace LHGames.Bot
             List<PathNoeud> paths = new List<PathNoeud>();
             //List<PathNoeud> finalPath = new List<PathNoeud>();
             if (finalPath.Count() == 0) {
-                foreach (PathNoeud n in minePosition)
+                if (MustReturnToHouse())
                 {
-                    PathNoeud path = trouverPathMine(playerPosition, n, map);
-                    if (path != null)
+                    int x = PlayerInfo.HouseLocation.X;
+                    int y = PlayerInfo.HouseLocation.Y;
+                    PathNoeud housePath = new PathNoeud(x, y, 0, 0, null);
+                    PathNoeud path = trouverPathMine(playerPosition, housePath, map, PlayerInfo);
+                    paths.Add(path);
+                }
+                else
+                {
+                    foreach (PathNoeud n in minePosition)
                     {
-                        paths.Add(path);
+                        PathNoeud path = trouverPathMine(playerPosition, n, map, PlayerInfo);
+                        if (path != null)
+                        {
+                            paths.Add(path);
+                        }
                     }
                 }
                 PathNoeud currentPath = paths[0];
@@ -125,16 +136,40 @@ namespace LHGames.Bot
                 }
             }
 
+            // miner si a coter dune mine
+            if (PlayerInfo.CarriedResources != PlayerInfo.CarryingCapacity && mineAutour(map, PlayerInfo))
+            {
+                int x = 0;
+                int y = 0;
+                for (int i = -1; i <= 1; i += 2)
+                {
+                    if (TileContent.Resource == map.GetTileAt(PlayerInfo.Position.X + i, PlayerInfo.Position.Y))
+                    {
+                        x = PlayerInfo.Position.X + i;
+                        y = PlayerInfo.Position.Y;
+                    }
+                }
+                for (int i = -1; i <= 1; i += 2)
+                {
+                    if (TileContent.Resource == map.GetTileAt(PlayerInfo.Position.X, PlayerInfo.Position.Y + i))
+                    {
+                        x = PlayerInfo.Position.X;
+                        y = PlayerInfo.Position.Y + i;
+                    }
+                }
+                return AIHelper.CreateCollectAction(new Point(x - PlayerInfo.Position.X, y - PlayerInfo.Position.Y));
+            }
 
-            if(finalPath.Count > 0)
+            // se deplacer
+            if (finalPath.Count > 0)
             {
                 PathNoeud prochainMove = finalPath[finalPath.Count - 1];
                 finalPath.Remove(prochainMove);
                 return AIHelper.CreateMoveAction(new Point(prochainMove.getX()-PlayerInfo.Position.X, prochainMove.getY()-PlayerInfo.Position.Y));
             }
-
-          
             
+
+
             var data = StorageHelper.Read<TestClass>("Test");
             Console.WriteLine(data?.Test);
             return AIHelper.CreateMoveAction(new Point(_currentDirection, 0));
@@ -149,7 +184,39 @@ namespace LHGames.Bot
         {
         }
 
-        static PathNoeud trouverPathMine(PathNoeud start, PathNoeud end, Map map)
+        internal bool MustReturnToHouse()
+        {
+            bool mustReturn = false;
+            if (PlayerInfo.CarriedResources + 500 > PlayerInfo.CarryingCapacity)
+                mustReturn = true;
+
+            return mustReturn;
+        }
+        static Boolean mineAutour(Map map, IPlayer PlayerInfo)
+        {
+            int x = 0;
+            int y = 0;
+            for (int i = -1; i <= 1; i += 2)
+            {
+                if (TileContent.Resource == map.GetTileAt(PlayerInfo.Position.X + i, PlayerInfo.Position.Y))
+                {
+                    x = PlayerInfo.Position.X + i;
+                    y = PlayerInfo.Position.Y;
+                    return true;
+                }
+            }
+            for (int i = -1; i <= 1; i += 2)
+            {
+                if (TileContent.Resource == map.GetTileAt(PlayerInfo.Position.X, PlayerInfo.Position.Y + i))
+                {
+                    x = PlayerInfo.Position.X;
+                    y = PlayerInfo.Position.Y + i;
+                    return true;
+                }
+            }
+            return false;
+        }
+        static PathNoeud trouverPathMine(PathNoeud start, PathNoeud end, Map map, IPlayer playerInfo)
         {
             List<PathNoeud> openSet = new List<PathNoeud>();
             List<PathNoeud> closedSet = new List<PathNoeud>();
@@ -175,7 +242,7 @@ namespace LHGames.Bot
                 }
 
                 // trouve les voisins
-                List<PathNoeud> neighbours = getNeighbours(next, end);
+                List<PathNoeud> neighbours = getNeighbours(next, end, map, playerInfo);
                 foreach (PathNoeud n in neighbours) {
                     bool contienDeja = false;
                     foreach(PathNoeud n2 in openSet)
@@ -207,7 +274,7 @@ namespace LHGames.Bot
             return null;
         }
 
-        static List<PathNoeud> getNeighbours(PathNoeud n, PathNoeud end)
+        static List<PathNoeud> getNeighbours(PathNoeud n, PathNoeud end, Map map, IPlayer playerInfo)
         {
             List<PathNoeud> neighbours = new List<PathNoeud>();
 
@@ -215,15 +282,21 @@ namespace LHGames.Bot
             {
                 int posX = n.getX();
                 int posY = n.getY();
-                PathNoeud tampon = new PathNoeud(posX + i, posY, n.getGCost() + 1, calculerHCost(n, end), n);
-                neighbours.Add(tampon);
+                if (map.VisibleDistance > Math.Abs(posX - playerInfo.Position.X) && map.VisibleDistance > Math.Abs(posY - playerInfo.Position.Y))
+                {
+                    PathNoeud tampon = new PathNoeud(posX + i, posY, n.getGCost() + 1, calculerHCost(n, end), n);
+                    neighbours.Add(tampon);
+                }
             }
             for (int i = -1; i <= 1; i += 2)
             {
                 int posX = n.getX();
                 int posY = n.getY();
-                PathNoeud tampon = new PathNoeud(posX, posY + i, n.getGCost() + 1, calculerHCost(n, end), n);
-                neighbours.Add(tampon);
+                if (map.VisibleDistance > Math.Abs(posX - playerInfo.Position.X) && map.VisibleDistance > Math.Abs(posY - playerInfo.Position.Y))
+                {
+                    PathNoeud tampon = new PathNoeud(posX, posY + i, n.getGCost() + 1, calculerHCost(n, end), n);
+                    neighbours.Add(tampon);
+                }
             }
             return neighbours;
         }
