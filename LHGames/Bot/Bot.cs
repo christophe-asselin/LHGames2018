@@ -81,9 +81,26 @@ namespace LHGames.Bot
         /// <returns>The action you wish to execute.</returns>
         internal string ExecuteTurn(Map map, IEnumerable<IPlayer> visiblePlayers)
         {
+            //portion pathfinding pour les Mines debut
             PathNoeud playerPosition = new PathNoeud(PlayerInfo.Position.X, PlayerInfo.Position.Y, 0, 0, null);
-            PathNoeud minePosition = new PathNoeud()
-            List<PathNoeud> path =  trouverPathMine(playerPosition, minePosition);
+            List<PathNoeud> minePosition = new List<PathNoeud>();
+            List<ResourceTile> minePosition_ = new List<ResourceTile>();
+            minePosition_ = GetVisibleResourceTiles(map);
+            List<PathNoeud> paths = new List<PathNoeud>();
+            foreach (PathNoeud n in minePosition)
+            {
+                PathNoeud path = trouverPathMine(playerPosition, n);
+                paths.Add(path);
+            }
+            PathNoeud currentPath = paths[0];
+            foreach(PathNoeud n in paths)
+            {
+                if (currentPath.getGCost() > n.getGCost())
+                {
+                    currentPath = n;
+                }
+            }
+            //fin portion pathfinding
 
             // TODO: Implement your AI here.
             if (map.GetTileAt(PlayerInfo.Position.X + _currentDirection, PlayerInfo.Position.Y) == TileContent.Wall)
@@ -103,7 +120,7 @@ namespace LHGames.Bot
         {
         }
 
-        static List<PathNoeud> trouverPathMine(PathNoeud start, PathNoeud end)
+        static PathNoeud trouverPathMine(PathNoeud start, PathNoeud end)
         {
             List<PathNoeud> openSet = new List<PathNoeud>();
             List<PathNoeud> closedSet = new List<PathNoeud>();
@@ -120,11 +137,36 @@ namespace LHGames.Bot
                         next = n;
                     }
                 }
+
+                if (verifierNoeudPareil(next, end))
+                {
+                    return next;
+                }
+
                 // trouve les voisins
-                List<PathNoeud> neighbours = getNeighbours(n, end);
-
+                List<PathNoeud> neighbours = getNeighbours(next, end);
+                foreach (PathNoeud n in neighbours) {
+                    bool contienDeja = false;
+                    foreach(PathNoeud n2 in openSet)
+                    {
+                        if (verifierNoeudPareil(n, n2))
+                        {
+                            contienDeja = true;
+                        }
+                    }
+                    foreach (PathNoeud n2 in closedSet)
+                    {
+                        if (verifierNoeudPareil(n, n2))
+                        {
+                            contienDeja = true;
+                        }
+                    }
+                    if (!contienDeja)
+                    {
+                        openSet.Add(n);
+                    }
+                }
             }
-
             return null;
         }
 
@@ -136,21 +178,46 @@ namespace LHGames.Bot
             {
                 int posX = n.getX();
                 int posY = n.getY();
-                PathNoeud tampon = new PathNoeud(posX, posY, n.getGCost() + 1, )
-
-                neighbours.Add()
+                PathNoeud tampon = new PathNoeud(posX + i, posY, n.getGCost() + 1, calculerHCost(n, end), n);
+                neighbours.Add(tampon);
             }
-
-
+            for (int i = -1; i <= 1; i += 2)
+            {
+                int posX = n.getX();
+                int posY = n.getY();
+                PathNoeud tampon = new PathNoeud(posX, posY + i, n.getGCost() + 1, calculerHCost(n, end), n);
+                neighbours.Add(tampon);
+            }
             return neighbours;
         }
 
         static int calculerHCost(PathNoeud n, PathNoeud end)
         {
-            int hCost = 0;
-            int n.getX();
+            int x = Math.Abs(n.getX() - end.getX());
+            int y = Math.Abs(n.getY() - end.getY());
+            return x + y;
+        }
 
-            return hCost;
+        internal List<ResourceTile> GetVisibleResourceTiles(Map map)
+        {
+            List<Tile> visibleTiles = map.GetVisibleTiles().ToList<Tile>();
+            List<ResourceTile> visibleResourceTiles = new List<ResourceTile>();
+
+            foreach (ResourceTile t in visibleTiles.OfType<ResourceTile>())
+            {
+                visibleResourceTiles.Add(t);
+            }
+
+            return visibleResourceTiles;
+        }
+
+        static bool verifierNoeudPareil(PathNoeud n1, PathNoeud n2)
+        {
+            if (n1.getX() == n2.getX() && n1.getY() == n2.getY())
+            {
+                return true;
+            }
+            return false;
         }
 
     }
