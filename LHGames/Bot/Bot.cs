@@ -114,7 +114,7 @@ namespace LHGames.Bot
 
 
             if (finalPath.Count() == 0) {
-                if (MustReturnToHouse())
+                if (MustReturnToHouse() || minePosition.Count == 0)
                 {
                     int x = PlayerInfo.HouseLocation.X;
                     int y = PlayerInfo.HouseLocation.Y;
